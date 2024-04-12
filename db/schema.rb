@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_04_12_160156) do
+ActiveRecord::Schema[7.1].define(version: 2024_04_12_170941) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,4 +22,13 @@ ActiveRecord::Schema[7.1].define(version: 2024_04_12_160156) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "stock_quotes", force: :cascade do |t|
+    t.decimal "price"
+    t.bigint "company_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_stock_quotes_on_company_id"
+  end
+
+  add_foreign_key "stock_quotes", "companies"
 end
