@@ -20,6 +20,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_04_12_170941) do
     t.string "origin_country"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["ticker"], name: "index_companies_on_ticker", unique: true
   end
 
   create_table "stock_quotes", force: :cascade do |t|
