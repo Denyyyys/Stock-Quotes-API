@@ -1,10 +1,14 @@
+require_relative '../../../utilities/utility_methods'
 module Api
   module V1
+
     class CompaniesController < ApplicationController
-      MAX_PAGINATION_LIMIT=100
+      before_action :validate_pagination_params, only: :index
+
+      MAX_PAGINATION_LIMIT=50
 
       def index
-        companies = Company.all.limit(limit()).offset(params[:offset])
+        companies = Company.limit(limit()).offset(params[:offset])
         render json: companies
       end
 
