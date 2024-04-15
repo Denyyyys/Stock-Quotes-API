@@ -3,7 +3,7 @@ module Api
     class CompaniesController < ApplicationController
       def index
         companies = Company.all
-        render json: companies, each_serializer: CompanySerializer
+        render json: companies
       end
 
       def show
