@@ -1,11 +1,16 @@
-class CompaniesController < ApplicationController
-  def index
-    render json: {:msg=> "Hello!"}
-  end
+module Api
+  module V1
+    class CompaniesController < ApplicationController
+      def index
+      end
 
-  def create
-  end
+      def show
+      end
+      def create
+      end
 
-  def destroy
+      def destroy
+      end
+    end
   end
 end
