@@ -35,4 +35,30 @@ RSpec.describe "StockQuotes", type: :request do
     end
   end
 
+  describe "DELETE api/v1/stock_quotes/ticker/:id" do
+    it "successfully delete stock quote by id" do
+      expect {
+        delete "/api/v1/stock_quotes/#{apple_stock_quotes[0].id}"
+      }.to change(StockQuote, :count).by(-1)
+      expect(response).to have_http_status(:no_content)
+      expect(response.body).to be_empty
+    end
+
+    it "stock quote with provided integer id does not exist error" do
+      expect {
+        delete "/api/v1/stock_quotes/0"
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({"error"=> "Cannot find stock quote with id: 0"})
+    end
+
+    it "provided id is not integer error" do
+      expect {
+        delete "/api/v1/stock_quotes/not_integer"
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to eq({"error"=> "Id of stock quote should be positive integer! Provided: not_integer"})
+    end
+  end
+
 end
