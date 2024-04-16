@@ -1,13 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe "Companies", type: :request do
+  let!(:companies) do
+    [
+      FactoryBot.create(:company, name: "Microsoft", ticker: "MSFT", origin_country: "USA"),
+      FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
+    ]
+  end
   describe "GET /index" do
-    let!(:companies) do
-      [
-        FactoryBot.create(:company, name: "Microsoft", ticker: "MSFT", origin_country: "USA"),
-        FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
-      ]
-    end
+
 
     it "returns all companies" do
       get "/api/v1/companies"
@@ -68,5 +69,19 @@ RSpec.describe "Companies", type: :request do
       expect(response_body).to eq({"error"=> "Limit parameter must be a positive integer or not be present"})
     end
   end
+  describe "GET /index/:ticker" do
+    it "provided ticker with wrong case" do
+      get "/api/v1/companies/msft"
+      response_body_without_id = response_body.except("id")
+      expect(response_body_without_id ).to eq({ "name"=> "Microsoft", "ticker"=> "MSFT", "origin_country"=> "USA"})
+    end
+
+    it "provided ticker is not found" do
+      get "/api/v1/companies/not_ticker"
+      expect(response_body).to eq({"error"=>"Company with ticker 'not_ticker' not found"})
+    end
+
+  end
+
 end
 
