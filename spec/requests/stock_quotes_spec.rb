@@ -1,31 +1,37 @@
 require 'rails_helper'
 
 RSpec.describe "StockQuotes", type: :request do
-  describe "GET /destroy" do
-    it "returns http success" do
-      get "/stock_quotes/destroy"
-      expect(response).to have_http_status(:success)
-    end
+  let!(:companies) do
+    [
+      FactoryBot.create(:company, name: "Microsoft", ticker: "MSFT", origin_country: "USA"),
+      FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
+    ]
   end
-
-  describe "GET /create" do
-    it "returns http success" do
-      get "/stock_quotes/create"
-      expect(response).to have_http_status(:success)
-    end
+  let!(:apple_stock_quotes) do
+    [
+      FactoryBot.create(:stock_quote, price: 102, company: companies[1]),
+      FactoryBot.create(:stock_quote, price: 122, company: companies[1]),
+      FactoryBot.create(:stock_quote, price: 132, company: companies[1]),
+    ]
   end
-
-  describe "GET /update" do
-    it "returns http success" do
-      get "/stock_quotes/update"
-      expect(response).to have_http_status(:success)
-    end
+  let!(:microsoft_stock_quotes) do
+    [
+      FactoryBot.create(:stock_quote, price: 102, company: companies[0]),
+    ]
   end
-
-  describe "GET /show" do
-    it "returns http success" do
-      get "/stock_quotes/show"
+  describe "GET api/v1/stock_quotes/ticker/:ticker" do
+    it "get all stock quotes" do
+      get "/api/v1/stock_quotes/ticker/AAPL"
+      expect(response).to be_present
       expect(response).to have_http_status(:success)
+      expect(response_body).to be_an_instance_of(Array)
+      expect(response_body.length).to eq(3)
+    end
+
+    it "get stock quotes of company, which does not exist" do
+      get "/api/v1/stock_quotes/ticker/not_exist"
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({"error"=>"Company with ticker 'not_exist' not found"})
     end
   end
 
