@@ -7,9 +7,7 @@ RSpec.describe "Companies", type: :request do
       FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
     ]
   end
-
   let!(:apple_stock_quote) { FactoryBot.create(:stock_quote, price: 102, company: companies[1]) }
-
   describe "GET /index" do
 
     it "returns all companies" do
@@ -136,6 +134,5 @@ RSpec.describe "Companies", type: :request do
       expect(response_body).to eq({"error"=> "Company with ticker 'not_exist' not found"})
     end
   end
-
 end
 
