@@ -8,7 +8,7 @@ RSpec.describe "Companies", type: :request do
     ]
   end
   let!(:apple_stock_quote) { FactoryBot.create(:stock_quote, price: 102, company: companies[1]) }
-  describe "GET /index" do
+  describe "GET /api/v1/companies" do
 
     it "returns all companies" do
       get "/api/v1/companies"
@@ -69,7 +69,8 @@ RSpec.describe "Companies", type: :request do
       expect(response_body).to eq({"error"=> "Limit parameter must be a positive integer or not be present"})
     end
   end
-  describe "GET /index/:ticker" do
+
+  describe "GET /api/v1/companies/:ticker" do
     it "provided ticker with wrong case" do
       get "/api/v1/companies/msft"
       # response_body_without_id = response_body.except("id")
@@ -83,7 +84,7 @@ RSpec.describe "Companies", type: :request do
 
   end
 
-  describe "POST /index/" do
+  describe "POST api/v1/companies" do
     it "provided correct data" do
       post "/api/v1/companies", params: { ticker: "GTLB", name: "GitLab Inc.", origin_country: "Ukraine" }
       expect(response_body_without_id).to eq({"name"=>"GitLab Inc.", "origin_country"=>"Ukraine", "ticker"=>"GTLB"})
@@ -108,7 +109,7 @@ RSpec.describe "Companies", type: :request do
     end
   end
 
-  describe "DELETE /index/:ticker" do
+  describe "DELETE /api/v1/companies/:ticker" do
     it "delete created record without stock quotes associated" do
       expect {
         delete "/api/v1/companies/msft"
