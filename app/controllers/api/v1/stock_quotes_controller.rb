@@ -25,7 +25,7 @@ module Api
             stock_quote.destroy
             head :no_content
           else
-            render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}
+            render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
           end
         end
       end
@@ -44,7 +44,7 @@ module Api
 
       private
       def handle_cannot_find_stock_quote(e)
-        render json: { error: "Cannot find stock quote with id: #{e.id}" }, status: :unprocessable_entity
+        render json: { error: "Cannot find stock quote with id: #{e.id}" }, status: :not_found
       end
 
       def handle_lock_wait_timeout
