@@ -72,8 +72,8 @@ RSpec.describe "Companies", type: :request do
   describe "GET /index/:ticker" do
     it "provided ticker with wrong case" do
       get "/api/v1/companies/msft"
-      response_body_without_id = response_body.except("id")
-      expect(response_body_without_id ).to eq({ "name"=> "Microsoft", "ticker"=> "MSFT", "origin_country"=> "USA"})
+      # response_body_without_id = response_body.except("id")
+      expect(response_body_without_id).to eq({ "name"=> "Microsoft", "ticker"=> "MSFT", "origin_country"=> "USA"})
     end
 
     it "provided ticker is not found" do
@@ -81,6 +81,31 @@ RSpec.describe "Companies", type: :request do
       expect(response_body).to eq({"error"=>"Company with ticker 'not_ticker' not found"})
     end
 
+  end
+
+  describe "POST /index/" do
+    it "provided correct data" do
+      post "/api/v1/companies", params: { ticker: "GTLB", name: "GitLab Inc.", origin_country: "Ukraine" }
+      expect(response_body_without_id).to eq({"name"=>"GitLab Inc.", "origin_country"=>"Ukraine", "ticker"=>"GTLB"})
+    end
+
+    it "ticker is not provided" do
+      post "/api/v1/companies", params: {name: "DELL", origin_country: "USA" }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body_without_id).to eq({"error"=> "Validation failed: Ticker can't be blank, Ticker is too short (minimum is 1 character)"})
+    end
+
+    it "name is not provided" do
+      post "/api/v1/companies", params: {ticker: "DELL", origin_country: "USA" }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body_without_id).to eq({"error"=> "Validation failed: Name can't be blank, Name is too short (minimum is 1 character)"})
+    end
+
+    it "company with provided ticker already exist" do
+      post "/api/v1/companies", params: {name: "Microsoft", ticker: "MSFT", origin_country: "USA"}
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body_without_id).to eq({"error"=> "Company with provided ticker already exists!"})
+    end
   end
 
 end
