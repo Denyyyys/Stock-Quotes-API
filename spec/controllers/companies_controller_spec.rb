@@ -9,7 +9,7 @@ RSpec.describe Api::V1::CompaniesController, type: :controller do
     end
   end
 
-  describe 'GET index' do
+  describe 'index action' do
     let(:larger_limit) { max_pagination_limit + 10 }
     let(:within_limit) { [max_pagination_limit - 10, 1].max }
 
