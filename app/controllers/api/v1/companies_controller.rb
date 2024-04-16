@@ -5,6 +5,7 @@ module Api
       before_action :validate_pagination_params, only: :index
       rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
       rescue_from ActiveRecord::RecordNotUnique, with: :handle_new_record_has_not_unique_ticker
+      rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
       MAX_PAGINATION_LIMIT=50
 
       def index
@@ -23,16 +24,32 @@ module Api
         end
       end
       def create
-        company = Company.create!(company_params)
-
-        if company.save
-          render json: company, serializer: CompanySerializer, status: :created
-        else
-          render json: { status: 'Error', message: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        ActiveRecord::Base.transaction do
+          company = Company.lock.create!(company_params)
+          if company.save
+            render json: company, serializer: CompanySerializer, status: :created
+          else
+            render json: { status: 'Error', message: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
+          end
         end
       end
 
       def destroy
+        if params[:ticker].present?
+          ActiveRecord::Base.transaction do
+            company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+            if company
+              company.lock!
+              stock_quotes = company.stock_quotes.lock(true)
+              stock_quotes.lock!
+              stock_quotes.destroy_all
+              company.destroy
+              head :no_content
+            else
+              render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+            end
+          end
+        end
 
       end
 
@@ -54,6 +71,10 @@ module Api
 
       def handle_new_record_has_not_unique_ticker
         render json: { error: "Company with provided ticker already exists!" }, status: :unprocessable_entity
+      end
+
+      def handle_lock_wait_timeout
+        render json: { error: "Failed to acquire lock on the company record" }, status: :unprocessable_entity
       end
     end
   end
