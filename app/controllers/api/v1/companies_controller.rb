@@ -35,19 +35,17 @@ module Api
       end
 
       def destroy
-        if params[:ticker].present?
-          ActiveRecord::Base.transaction do
-            company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
-            if company
-              company.lock!
-              stock_quotes = company.stock_quotes.lock(true)
-              stock_quotes.lock!
-              stock_quotes.destroy_all
-              company.destroy
-              head :no_content
-            else
-              render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
-            end
+        ActiveRecord::Base.transaction do
+          company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+          if company
+            company.lock!
+            stock_quotes = company.stock_quotes.lock(true)
+            stock_quotes.lock!
+            stock_quotes.destroy_all
+            company.destroy
+            head :no_content
+          else
+            render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
           end
         end
       end
