@@ -1,14 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe "Companies", type: :request do
-  let!(:companies) do
+  let(:companies) do
     [
       FactoryBot.create(:company, name: "Microsoft", ticker: "MSFT", origin_country: "USA"),
       FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
     ]
   end
-  describe "GET /index" do
 
+  let!(:apple_stock_quote) { FactoryBot.create(:stock_quote, price: 102, company: companies[1]) }
+
+  describe "GET /index" do
 
     it "returns all companies" do
       get "/api/v1/companies"
@@ -105,6 +107,33 @@ RSpec.describe "Companies", type: :request do
       post "/api/v1/companies", params: {name: "Microsoft", ticker: "MSFT", origin_country: "USA"}
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body_without_id).to eq({"error"=> "Company with provided ticker already exists!"})
+    end
+  end
+
+  describe "DELETE /index/:ticker" do
+    it "delete created record without stock quotes associated" do
+      expect {
+        delete "/api/v1/companies/msft"
+      }.to change(Company, :count).by(-1)
+      expect(StockQuote.count).to eq(1)
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it "delete created record with stock quotes associated" do
+      expect {
+        delete "/api/v1/companies/aapl"
+      }.to change(Company, :count).by(-1)
+      expect(StockQuote.count).to eq(0)
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it "delete created record with incorrect ticker" do
+      expect {
+        delete "/api/v1/companies/not_exist"
+      }.to change(Company, :count).by(0)
+      expect(StockQuote.count).to eq(1)
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({"error"=> "Company with ticker 'not_exist' not found"})
     end
   end
 
