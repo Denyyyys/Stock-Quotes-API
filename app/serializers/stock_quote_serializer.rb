@@ -3,7 +3,11 @@ class StockQuoteSerializer < ActiveModel::Serializer
   def company_ticker
     company = Company.find(self.object.company_id)
     if company
-      company.ticker
+      "ticker: #{company.ticker}"
     end
+  end
+
+  def price
+    object.price.to_f # Ensure price is serialized as float
   end
 end
