@@ -44,7 +44,19 @@ module Api
         end
       end
 
-      def create # create new stock quote
+      def create
+        # binding.irb
+        render_blank_ticker_error && return if params[:ticker].blank?
+
+        render_invalid_timestamp_error && return if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
+
+        company = Company.lock.find_by(ticker: params[:ticker])
+        if company
+          stock_quote = build_stock_quote(company)
+          save_stock_quote(stock_quote)
+        else
+          render_company_not_found_error
+        end
       end
 
       def update # update stock quote
@@ -60,6 +72,35 @@ module Api
 
       def handle_lock_wait_timeout
         render json: { error: "Failed to acquire lock on the stock quote record" }, status: :unprocessable_entity
+      end
+
+      def stock_quote_params
+        params.permit(:price, :created_at)
+      end
+
+      def build_stock_quote(company)
+        merged_params = { company_id: company.id }
+        merged_params[:updated_at] = stock_quote_params[:created_at] if stock_quote_params.key?(:created_at)
+        StockQuote.new(stock_quote_params.merge(merged_params))
+      end
+
+      def save_stock_quote(stock_quote)
+        if stock_quote.save
+          render json: stock_quote, status: :created
+        else
+          render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        end
+      end
+      def render_blank_ticker_error
+        render json: { error: "Ticker can't be blank!" }, status: :unprocessable_entity
+      end
+
+      def render_invalid_timestamp_error
+        render json: { error: "Provided timestamp is invalid! Provided: #{stock_quote_params[:created_at]}" }, status: :unprocessable_entity
+      end
+
+      def render_company_not_found_error
+        render json: { error: "Company with ticker: '#{params[:ticker]}' could not be found!" }, status: :not_found
       end
     end
   end
