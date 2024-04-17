@@ -16,3 +16,7 @@ def validate_pagination_param(param_name)
     end
   end
 end
+
+def valid_timestamp(timestamp)
+  timestamp.is_a?(Time) || timestamp.is_a?(ActiveSupport::TimeWithZone)
+end
