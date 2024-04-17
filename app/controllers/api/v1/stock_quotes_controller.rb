@@ -17,8 +17,7 @@ module Api
 
       def destroy # delete one stock quote by id
         ActiveRecord::Base.transaction do
-          if integer_string?(params[:id])
-            # binding.irb
+          if integer_string?(params[:id]) && Integer(params[:id]) > 0
             stock_quote_id = integer_string?(params[:id])
             stock_quote = StockQuote.find(stock_quote_id)
             stock_quote.lock!
@@ -30,7 +29,19 @@ module Api
         end
       end
 
-      def delete_all_by_ticker # delete all stock quotes of specific company
+      def delete_all_by_ticker # delete all stock quotes of specific company, but not company
+        ActiveRecord::Base.transaction do
+          company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+          if company
+            company.lock!
+            stock_quotes = company.stock_quotes.lock(true)
+            stock_quotes.lock!
+            stock_quotes.destroy_all
+            head :no_content
+          else
+            render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+          end
+        end
       end
 
       def create # create new stock quote
