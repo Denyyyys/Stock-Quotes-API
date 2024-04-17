@@ -19,7 +19,7 @@ RSpec.describe "StockQuotes", type: :request do
       FactoryBot.create(:stock_quote, price: 102, company: companies[0]),
     ]
   end
-  describe "GET api/v1/stock_quotes/ticker/:ticker" do
+  describe "GET /api/v1/stock_quotes/ticker/:ticker" do
     it "get all stock quotes" do
       get "/api/v1/stock_quotes/ticker/AAPL"
       expect(response).to be_present
@@ -35,7 +35,7 @@ RSpec.describe "StockQuotes", type: :request do
     end
   end
 
-  describe "DELETE api/v1/stock_quotes/:id" do
+  describe "DELETE /api/v1/stock_quotes/:id" do
     it "successfully delete stock quote by id" do
       expect {
         delete "/api/v1/stock_quotes/#{apple_stock_quotes[0].id}"
@@ -63,7 +63,7 @@ RSpec.describe "StockQuotes", type: :request do
     end
   end
 
-  describe "DELETE api/v1/stock_quotes/ticker/:ticker" do
+  describe "DELETE /api/v1/stock_quotes/ticker/:ticker" do
     it "provided correct ticker" do
       ticker = "MSFT"
       expect {
@@ -89,6 +89,98 @@ RSpec.describe "StockQuotes", type: :request do
       expect(response).to have_http_status(:not_found)
       expect(response_body).to eq({"error"=> "Company with ticker '#{ticker}' not found"})
     end
+  end
+
+  describe "POST /api/v1/stock_quotes" do
+    it "Add stock quote with correct data without timestamp" do
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT", price: 102.92}
+      }.to change(StockQuote, :count).by(1)
+      expect(response).to have_http_status(:created)
+      expect(response_body).to be_present
+
+      expect(response_body["id"]).to be_present
+      expect(response_body["price"]).to eq(102.92)
+      expect(response_body["company_ticker"]).to eq("MSFT")
+      expect(response_body["created_at"]).to be_present
+    end
+
+    it "Add stock quote with correct data with timestamp" do
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT", price: 102.92, created_at: "1.02.2023 10:20"}
+      }.to change(StockQuote, :count).by(1)
+      expect(response).to have_http_status(:created)
+      expect(response_body).to be_present
+
+      expect(response_body["id"]).to be_present
+      expect(response_body["price"]).to eq(102.92)
+      expect(response_body["company_ticker"]).to eq("MSFT")
+      expect(response_body["created_at"]).to eq("2023-02-01T10:20:00.000Z")
+    end
+
+    it "Add stock quote with incorrect timestamp error" do
+      timestamp = "not_timestamp"
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT", price: 102.92, created_at: timestamp}
+      }.to change(StockQuote, :count).by(0)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to be_present
+
+      expect(response_body).to eq({"error" => "Provided timestamp is invalid! Provided: #{timestamp}"})
+    end
+
+    it "Add stock quote with incorrect ticker error" do
+      ticker = "not_valid_ticker"
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: ticker, price: 102.92}
+      }.to change(StockQuote, :count).by(0)
+
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to be_present
+      expect(response_body).to eq({"error" => "Company with ticker: '#{ticker}' could not be found!"})
+    end
+
+    it "Add stock quote without ticker error" do
+      expect {
+        post "/api/v1/stock_quotes", params: { price: 102.92}
+      }.to change(StockQuote, :count).by(0)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to be_present
+      expect(response_body).to eq({"error" => "Ticker can't be blank!"})
+    end
+
+    it "Add stock quote without price error" do
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT"}
+      }.to change(StockQuote, :count).by(0)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to be_present
+      expect(response_body).to eq({"error" => "Price can't be blank, Price is not a number"})
+    end
+
+    it "Add stock quote with negative price error" do
+      price = -123.3
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT", price: price}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to be_present
+      expect(response_body).to eq({"error" => "Price must be greater than 0"})
+    end
+
+    it "Add stock quote with price, which is not number error" do
+      price = "some_string"
+      expect {
+        post "/api/v1/stock_quotes", params: {ticker: "MSFT", price: price}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to be_present
+      expect(response_body).to eq({"error" => "Price is not a number"})
+    end
+
   end
 
 
