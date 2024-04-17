@@ -1,3 +1,5 @@
+require 'time'
+
 def integer_string?(str)
   Integer(str) rescue false
 end
@@ -18,5 +20,10 @@ def validate_pagination_param(param_name)
 end
 
 def valid_timestamp(timestamp)
-  timestamp.is_a?(Time) || timestamp.is_a?(ActiveSupport::TimeWithZone)
+  begin
+    Time.parse(timestamp)
+    true
+  rescue ArgumentError, TypeError
+    false
+  end
 end
