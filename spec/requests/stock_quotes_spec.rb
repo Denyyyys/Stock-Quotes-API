@@ -35,7 +35,7 @@ RSpec.describe "StockQuotes", type: :request do
     end
   end
 
-  describe "DELETE api/v1/stock_quotes/ticker/:id" do
+  describe "DELETE api/v1/stock_quotes/:id" do
     it "successfully delete stock quote by id" do
       expect {
         delete "/api/v1/stock_quotes/#{apple_stock_quotes[0].id}"
@@ -44,21 +44,52 @@ RSpec.describe "StockQuotes", type: :request do
       expect(response.body).to be_empty
     end
 
-    it "stock quote with provided integer id does not exist error" do
+    it "stock quote with provided negative integer error" do
+      id = 0
       expect {
-        delete "/api/v1/stock_quotes/0"
+        delete "/api/v1/stock_quotes/#{id}"
       }.to change(StockQuote, :count).by(0)
-      expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({"error"=> "Cannot find stock quote with id: 0"})
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response_body).to eq({"error"=> "Id of stock quote should be positive integer! Provided: #{id}"})
     end
 
     it "provided id is not integer error" do
+      id = "not_integer"
       expect {
-        delete "/api/v1/stock_quotes/not_integer"
+        delete "/api/v1/stock_quotes/#{id}"
       }.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body).to eq({"error"=> "Id of stock quote should be positive integer! Provided: not_integer"})
+      expect(response_body).to eq({"error"=> "Id of stock quote should be positive integer! Provided: #{id}"})
     end
   end
+
+  describe "DELETE api/v1/stock_quotes/ticker/:ticker" do
+    it "provided correct ticker" do
+      ticker = "MSFT"
+      expect {
+        delete "/api/v1/stock_quotes/ticker/#{ticker}"
+      }.to change(StockQuote, :count).by(-1)
+
+      expect {
+        delete "/api/v1/stock_quotes/ticker/#{ticker}"
+      }.to change(Company, :count).by(0)
+      expect(response).to have_http_status(:no_content)
+      expect(response.body).to be_empty
+    end
+
+    it "provided incorrect ticker" do
+      ticker = "not_ticker"
+      expect {
+        delete "/api/v1/stock_quotes/ticker/#{ticker}"
+      }.to change(StockQuote, :count).by(0)
+      expect {
+        delete "/api/v1/stock_quotes/ticker/#{ticker}"
+      }.to change(Company, :count).by(0)
+
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({"error"=> "Company with ticker '#{ticker}' not found"})
+    end
+  end
+
 
 end
