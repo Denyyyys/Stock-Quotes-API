@@ -24,13 +24,11 @@ module Api
         end
       end
       def create
-        ActiveRecord::Base.transaction do
-          company = Company.lock.create!(company_params)
-          if company.save
-            render json: company, serializer: CompanySerializer, status: :created
-          else
-            render json: { status: 'Error', message: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
-          end
+        company = Company.new(company_params)
+        if company.save
+          render json: company, status: :created
+        else
+          render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
       end
 
