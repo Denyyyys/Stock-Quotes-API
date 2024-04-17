@@ -3,7 +3,7 @@ class StockQuoteSerializer < ActiveModel::Serializer
   def company_ticker
     company = Company.find(self.object.company_id)
     if company
-      "ticker: #{company.ticker}"
+      company.ticker
     end
   end
 
