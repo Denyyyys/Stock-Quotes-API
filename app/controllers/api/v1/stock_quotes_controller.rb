@@ -19,8 +19,7 @@ module Api
         ActiveRecord::Base.transaction do
           if integer_string?(params[:id]) && Integer(params[:id]) > 0
             stock_quote_id = integer_string?(params[:id])
-            stock_quote = StockQuote.find(stock_quote_id)
-            stock_quote.lock!
+            stock_quote = StockQuote.lock.find(stock_quote_id)
             stock_quote.destroy
             head :no_content
           else
@@ -29,7 +28,7 @@ module Api
         end
       end
 
-      def delete_all_by_ticker # delete all stock quotes of specific company, but not company
+      def delete_all_by_ticker
         ActiveRecord::Base.transaction do
           company = Company.lock.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
           if company
