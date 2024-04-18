@@ -1,92 +1,776 @@
----
 openapi: 3.0.1
 info:
-  title: API V1
+  title: Stock Quotes API
   version: v1
-paths:
-  "/api/v1/companies":
-    get:
-      summary: list companies
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: create company
-      responses:
-        '200':
-          description: successful
-  "/api/v1/companies/{ticker}":
-    parameters:
-    - name: ticker
-      in: path
-      description: ticker
-      required: true
-      schema:
-        type: string
-    get:
-      summary: show company
-      responses:
-        '200':
-          description: successful
-    delete:
-      summary: delete company
-      responses:
-        '200':
-          description: successful
-  "/api/v1/stock_quotes/ticker/{ticker}":
-    parameters:
-    - name: ticker
-      in: path
-      description: ticker
-      required: true
-      schema:
-        type: string
-    get:
-      summary: get_by_ticker stock_quote
-      responses:
-        '200':
-          description: successful
-    delete:
-      summary: delete_all_by_ticker stock_quote
-      responses:
-        '200':
-          description: successful
-  "/api/v1/stock_quotes":
-    post:
-      summary: create stock_quote
-      responses:
-        '200':
-          description: successful
-  "/api/v1/stock_quotes/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: show stock_quote
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update stock_quote
-      responses:
-        '200':
-          description: successful
-    put:
-      summary: update stock_quote
-      responses:
-        '200':
-          description: successful
-    delete:
-      summary: delete stock_quote
-      responses:
-        '200':
-          description: successful
 servers:
-- url: http://{defaultHost}
-  variables:
-    defaultHost:
-      default: localhost:3000
+  - url: http://127.0.0.1:3000
+tags:
+  - name: Companies
+  - name: Stock_quotes
+paths:
+  /api/v1/companies:
+    get:
+      tags:
+        - Companies
+      summary: Get All Companies
+      responses:
+        '200':
+          description: OK
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"5c23ddd6f65c8541b8ced3f1c54711c6"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: 7559cfe0-ee17-4b27-ba15-0e86a4080f12
+            x-runtime:
+              schema:
+                type: number
+                example: '0.351649'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=44.68,
+                  instantiation.active_record;dur=54.22,
+                  render.active_model_serializers;dur=0.51,
+                  process_action.action_controller;dur=256.69
+            Content-Length:
+              schema:
+                type: integer
+                example: '136'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 44
+                  name: Microsoft
+                  ticker: MSFT
+                  origin_country: null
+                - id: 47
+                  name: Apple Inc.
+                  ticker: AAPL
+                  origin_country: null
+    post:
+      tags:
+        - Companies
+      summary: Create Company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                ticker: AAPf
+                name: Apple Inc.
+      responses:
+        '201':
+          description: Created
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"86f65c713b721ed2744650fbda394bc8"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: c7aa4372-2a60-4c9c-ae86-2ba8435c5578
+            x-runtime:
+              schema:
+                type: number
+                example: '0.063499'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  unpermitted_parameters.action_controller;dur=0.01,
+                  sql.active_record;dur=4.13,
+                  transaction.active_record;dur=4.57,
+                  render.active_model_serializers;dur=0.37,
+                  process_action.action_controller;dur=9.86
+            Content-Length:
+              schema:
+                type: integer
+                example: '67'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 48
+                name: Apple Inc.
+                ticker: AAPf
+                origin_country: null
+  /api/v1/companies/{ticker}:
+    get:
+      tags:
+        - Companies
+      summary: Get Company by ticker
+      parameters:
+        - name: ticker
+          in: path
+          schema:
+            type: string
+          required: true
+          example: msFT
+      responses:
+        '200':
+          description: OK
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"d458ec8b1d8bd6412eab1028ae12c6b4"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: acc93e1a-f1fc-4fec-9d09-117da74727d4
+            x-runtime:
+              schema:
+                type: number
+                example: '0.047693'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=0.77,
+                  instantiation.active_record;dur=0.26,
+                  render.active_model_serializers;dur=0.30,
+                  process_action.action_controller;dur=4.75
+            Content-Length:
+              schema:
+                type: integer
+                example: '66'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 44
+                name: Microsoft
+                ticker: MSFT
+                origin_country: null
+    delete:
+      tags:
+        - Companies
+      summary: Delete Company by ticker
+      parameters:
+        - name: ticker
+          in: path
+          schema:
+            type: string
+          required: true
+          example: AAPL
+      responses:
+        '204':
+          description: No Content
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            cache-control:
+              schema:
+                type: string
+                example: no-cache
+            x-request-id:
+              schema:
+                type: string
+                example: 5d2ec26b-b89d-4097-b6af-be6c874ea91f
+            x-runtime:
+              schema:
+                type: number
+                example: '0.127267'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=10.34,
+                  instantiation.active_record;dur=0.14,
+                  transaction.active_record;dur=89.90,
+                  process_action.action_controller;dur=92.09
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: null
+  /api/v1/stock_quotes/ticker/{ticker}:
+    get:
+      tags:
+        - Stock_quotes
+      summary: Get All Stock Quotes By Ticker
+      parameters:
+        - name: ticker
+          in: path
+          schema:
+            type: string
+          required: true
+          example: MSFTs
+      responses:
+        '200':
+          description: OK
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"f759d6e471c6f46e339e8fba8e72eadb"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: 26495a6d-8b60-4fbe-ac77-c32bfa965599
+            x-runtime:
+              schema:
+                type: number
+                example: '0.070479'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=1.89,
+                  instantiation.active_record;dur=17.83,
+                  render.active_model_serializers;dur=3.40,
+                  process_action.action_controller;dur=30.57
+            Content-Length:
+              schema:
+                type: integer
+                example: '81'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 72
+                  price: 100
+                  ticker: MSFT
+                  created_at: '2024-04-18T05:06:00.000Z'
+    delete:
+      tags:
+        - Stock_quotes
+      summary: 'Delete All Stock Quotes of company by ticker '
+      parameters:
+        - name: ticker
+          in: path
+          schema:
+            type: string
+          required: true
+          example: MSFT
+      responses:
+        '204':
+          description: No Content
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            cache-control:
+              schema:
+                type: string
+                example: no-cache
+            x-request-id:
+              schema:
+                type: string
+                example: cd6dda13-bf73-44ae-8442-8bf9abfdc095
+            x-runtime:
+              schema:
+                type: number
+                example: '0.059372'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=10.27,
+                  instantiation.active_record;dur=0.29,
+                  transaction.active_record;dur=18.28,
+                  process_action.action_controller;dur=20.40
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: null
+  /api/v1/stock_quotes/{id}:
+    delete:
+      tags:
+        - Stock_quotes
+      summary: Delete Stock Quote with specific id
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '72'
+      responses:
+        '204':
+          description: No Content
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            cache-control:
+              schema:
+                type: string
+                example: no-cache
+            x-request-id:
+              schema:
+                type: string
+                example: b67aee77-3361-40f7-88e3-aacdb69cccd0
+            x-runtime:
+              schema:
+                type: number
+                example: '0.292619'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=254.45,
+                  instantiation.active_record;dur=0.09,
+                  transaction.active_record;dur=11.32,
+                  process_action.action_controller;dur=247.90
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: null
+    patch:
+      tags:
+        - Stock_quotes
+      summary: Update Stock Quote by id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                price: 10.93
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '77'
+      responses:
+        '200':
+          description: OK
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"9817e7a506acfa630c50219dc7f05832"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: e6f380f4-ab61-455f-99c2-69485d05f658
+            x-runtime:
+              schema:
+                type: number
+                example: '0.051590'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  unpermitted_parameters.action_controller;dur=0.00,
+                  sql.active_record;dur=4.10,
+                  instantiation.active_record;dur=0.12,
+                  render.active_model_serializers;dur=2.56,
+                  transaction.active_record;dur=9.53,
+                  process_action.action_controller;dur=11.94
+            Content-Length:
+              schema:
+                type: integer
+                example: '79'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 77
+                price: 10.93
+                ticker: MSFT
+                created_at: '2024-04-18T15:26:36.612Z'
+    get:
+      tags:
+        - Stock_quotes
+      summary: Get Stock Quote By Id
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '77'
+      responses:
+        '200':
+          description: OK
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"9817e7a506acfa630c50219dc7f05832"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: 311b2525-92d7-494c-8d5c-f6226682dc13
+            x-runtime:
+              schema:
+                type: number
+                example: '0.048913'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  sql.active_record;dur=0.88,
+                  instantiation.active_record;dur=0.15,
+                  render.active_model_serializers;dur=3.58,
+                  process_action.action_controller;dur=7.30
+            Content-Length:
+              schema:
+                type: integer
+                example: '79'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 77
+                price: 10.93
+                ticker: MSFT
+                created_at: '2024-04-18T15:26:36.612Z'
+  /api/v1/stock_quotes:
+    post:
+      tags:
+        - Stock_quotes
+      summary: Create Stock Quote
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                ticker: MSFT
+                price: 102.45
+      responses:
+        '201':
+          description: Created
+          headers:
+            x-frame-options:
+              schema:
+                type: string
+                example: SAMEORIGIN
+            x-xss-protection:
+              schema:
+                type: integer
+                example: '0'
+            x-content-type-options:
+              schema:
+                type: string
+                example: nosniff
+            x-permitted-cross-domain-policies:
+              schema:
+                type: string
+                example: none
+            referrer-policy:
+              schema:
+                type: string
+                example: strict-origin-when-cross-origin
+            content-type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            vary:
+              schema:
+                type: string
+                example: Accept
+            etag:
+              schema:
+                type: string
+                example: W/"36df0643b4514731c6d9f7926c0dcf32"
+            cache-control:
+              schema:
+                type: string
+                example: max-age=0, private, must-revalidate
+            x-request-id:
+              schema:
+                type: string
+                example: 0543f466-f736-487f-bdcd-f6d7e7a1d1da
+            x-runtime:
+              schema:
+                type: number
+                example: '0.066071'
+            server-timing:
+              schema:
+                type: string
+                example: >-
+                  start_processing.action_controller;dur=0.01,
+                  unpermitted_parameters.action_controller;dur=0.01,
+                  sql.active_record;dur=6.37,
+                  instantiation.active_record;dur=0.25,
+                  transaction.active_record;dur=9.69,
+                  render.active_model_serializers;dur=2.72,
+                  process_action.action_controller;dur=22.39
+            Content-Length:
+              schema:
+                type: integer
+                example: '80'
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 77
+                price: 102.45
+                ticker: MSFT
+                created_at: '2024-04-18T15:26:36.612Z'
