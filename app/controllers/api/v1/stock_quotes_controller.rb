@@ -31,11 +31,9 @@ module Api
 
       def delete_all_by_ticker # delete all stock quotes of specific company, but not company
         ActiveRecord::Base.transaction do
-          company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+          company = Company.lock.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
           if company
-            company.lock!
             stock_quotes = company.stock_quotes.lock(true)
-            stock_quotes.lock!
             stock_quotes.destroy_all
             head :no_content
           else
@@ -48,7 +46,7 @@ module Api
         # binding.irb
         render_blank_ticker_error && return if params[:ticker].blank?
 
-        render_invalid_timestamp_error && return if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
+        render_invalid_timestamp_error(params[:created_at]) && return if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
 
         company = Company.lock.find_by(ticker: params[:ticker])
         if company
@@ -59,7 +57,37 @@ module Api
         end
       end
 
-      def update # update stock quote
+      def update
+        unless integer_string?(params[:id]) && Integer(params[:id]) > 0
+          render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
+          return
+        end
+        if params.key?(:created_at) && !valid_timestamp(params[:created_at])
+          render_invalid_timestamp_error(params[:created_at])
+          return
+        end
+
+        new_params = stock_quotes_update_params
+        stock_quote_id = integer_string?(params[:id])
+
+        ActiveRecord::Base.transaction do
+          stock_quote = StockQuote.lock.find(stock_quote_id)
+          if params[:ticker].present?
+            company = Company.lock.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+            if company
+              new_params = new_params.merge({company_id: company.id})
+            else
+              render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+              return
+            end
+          end
+          if stock_quote.update(new_params)
+            render json: stock_quote, status: :ok
+            return
+          else
+            render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
+          end
+        end
       end
 
       def show # get one stock quote with id
@@ -75,6 +103,10 @@ module Api
       end
 
       def stock_quote_params
+        params.permit(:price, :created_at)
+      end
+
+      def stock_quotes_update_params
         params.permit(:price, :created_at)
       end
 
@@ -95,12 +127,16 @@ module Api
         render json: { error: "Ticker can't be blank!" }, status: :unprocessable_entity
       end
 
-      def render_invalid_timestamp_error
-        render json: { error: "Provided timestamp is invalid! Provided: #{stock_quote_params[:created_at]}" }, status: :unprocessable_entity
+      def render_invalid_timestamp_error(timestamp)
+        render json: { error: "Provided timestamp is invalid! Provided: #{timestamp}" }, status: :unprocessable_entity
       end
 
       def render_company_not_found_error
         render json: { error: "Company with ticker: '#{params[:ticker]}' could not be found!" }, status: :not_found
+      end
+
+      def render_blank_stock_quote_id
+        render json: { error: "Stock quote id can't be blank!" }, status: :unprocessable_entity
       end
     end
   end
