@@ -256,7 +256,6 @@ RSpec.describe "StockQuotes", type: :request do
   describe "Get /api/v1/stock_quotes/:id" do
     it "Get stock quote by id, which is valid" do
       stock_id = apple_stock_quotes[0].id
-      puts stock_id
       expect {
         get "/api/v1/stock_quotes/#{stock_id}"
       }.to change(StockQuote, :count).by(0)
