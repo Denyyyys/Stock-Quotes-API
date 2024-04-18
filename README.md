@@ -2,6 +2,12 @@
 
 This API serves as a backend for application for managing stock quotes and related companies. Below are the instructions for getting started, running tests, and accessing additional resources.
 
+## Link To Video Tutorial
+
+I have also created video, in which I showed how to start the application, how to run tests, how I did the commits, how I decided to do the `there can be multiple clients sending stock quotes concurrently` part of the assignment and much more. Therefore, I highly recommend that the person who will be assessing my assignment reads this material.
+Link:
+https://www.youtube.com/watch?v=RDUFS7WAhHw
+
 ## Getting Started
 
 To start the server, follow these steps:
