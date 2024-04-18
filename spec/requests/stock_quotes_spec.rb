@@ -101,7 +101,7 @@ RSpec.describe "StockQuotes", type: :request do
 
       expect(response_body["id"]).to be_present
       expect(response_body["price"]).to eq(102.92)
-      expect(response_body["company_ticker"]).to eq("MSFT")
+      expect(response_body["ticker"]).to eq("MSFT")
       expect(response_body["created_at"]).to be_present
     end
 
@@ -114,7 +114,7 @@ RSpec.describe "StockQuotes", type: :request do
 
       expect(response_body["id"]).to be_present
       expect(response_body["price"]).to eq(102.92)
-      expect(response_body["company_ticker"]).to eq("MSFT")
+      expect(response_body["ticker"]).to eq("MSFT")
       expect(response_body["created_at"]).to eq("2023-02-01T10:20:00.000Z")
     end
 
@@ -194,7 +194,7 @@ RSpec.describe "StockQuotes", type: :request do
       expect(response_body["id"]).to be_present
       expect(response_body["created_at"]).to be_present
       expect(response_body["price"]).to eq(10)
-      expect(response_body["company_ticker"]).to eq("MSFT")
+      expect(response_body["ticker"]).to eq("MSFT")
     end
 
     it "update stock quote with negative price error" do
@@ -250,6 +250,22 @@ RSpec.describe "StockQuotes", type: :request do
       expect(response_body["id"]).to be_present
       expect(response_body["created_at"]).to eq("2018-10-13T10:19:00.000Z")
       expect(response_body["price"]).to be_present
+    end
+  end
+
+  describe "Get /api/v1/stock_quotes/:id" do
+    it "Get stock quote by id, which is valid" do
+      stock_id = apple_stock_quotes[0].id
+      puts stock_id
+      expect {
+        get "/api/v1/stock_quotes/#{stock_id}"
+      }.to change(StockQuote, :count).by(0)
+      expect(response_body).to be_present
+      expect(response).to have_http_status(:success)
+      expect(response_body["id"]).to eq(stock_id)
+      expect(response_body["created_at"]).to be_present
+      expect(response_body["price"]).to be_present
+      expect(response_body["ticker"]).to be_present
     end
   end
 
