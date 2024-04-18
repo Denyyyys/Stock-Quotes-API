@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "Companies", type: :request do
-  let(:companies) do
+  let!(:companies) do
     [
       FactoryBot.create(:company, name: "Microsoft", ticker: "MSFT", origin_country: "USA"),
       FactoryBot.create(:company, name: "Apple", ticker: "AAPL", origin_country: "USA")
@@ -84,9 +84,10 @@ RSpec.describe "Companies", type: :request do
 
   end
 
-  describe "POST api/v1/companies" do
+  describe "POST /api/v1/companies" do
     it "provided correct data" do
       post "/api/v1/companies", params: { ticker: "GTLB", name: "GitLab Inc.", origin_country: "Ukraine" }
+      expect(response).to have_http_status(:created)
       expect(response_body_without_id).to eq({"name"=>"GitLab Inc.", "origin_country"=>"Ukraine", "ticker"=>"GTLB"})
     end
 
