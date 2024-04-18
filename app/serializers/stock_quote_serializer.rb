@@ -1,6 +1,6 @@
 class StockQuoteSerializer < ActiveModel::Serializer
-  attributes :id, :price, :company_ticker, :created_at
-  def company_ticker
+  attributes :id, :price, :ticker, :created_at
+  def ticker
     company = Company.find(self.object.company_id)
     if company
       company.ticker

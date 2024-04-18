@@ -90,7 +90,14 @@ module Api
         end
       end
 
-      def show # get one stock quote with id
+      def show
+        if integer_string?(params[:id]) && Integer(params[:id]) > 0
+          id = Integer(params[:id])
+          found_stock_quote = StockQuote.find(id)
+          render json: found_stock_quote
+        else
+          render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
+        end
       end
 
       private
