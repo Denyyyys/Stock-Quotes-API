@@ -183,5 +183,74 @@ RSpec.describe "StockQuotes", type: :request do
 
   end
 
+  describe "PATCH /api/v1/stock_quotes/:id" do
+    it "successfully update stock quote" do
+      stock_id = apple_stock_quotes[0].id
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {price: 10, ticker: "MSFT"}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to be_present
+      expect(response).to have_http_status(:success)
+      expect(response_body["id"]).to be_present
+      expect(response_body["created_at"]).to be_present
+      expect(response_body["price"]).to eq(10)
+      expect(response_body["company_ticker"]).to eq("MSFT")
+    end
+
+    it "update stock quote with negative price error" do
+      stock_id = apple_stock_quotes[0].id
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {price: -10}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to be_present
+      expect(response_body).to eq({"error" => "Price must be greater than 0"})
+    end
+
+    it "update stock quote with price as string error" do
+      stock_id = apple_stock_quotes[0].id
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {price: "not_number"}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to be_present
+      expect(response_body).to eq({"error" => "Price is not a number"})
+    end
+
+    it "update stock quote with ticker for company, which does not exist error" do
+      stock_id = apple_stock_quotes[0].id
+      ticker = "not_exists_ticker"
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {ticker: ticker}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_present
+      expect(response_body).to eq({"error" => "Company with ticker '#{ticker}' not found"})
+    end
+
+    it "update stock quote with created_at, which is timestamp error" do
+      stock_id = apple_stock_quotes[0].id
+      new_created_at = "not_timestamp"
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {created_at: new_created_at}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to be_present
+      expect(response_body).to eq({"error" => "Provided timestamp is invalid! Provided: #{new_created_at}"})
+    end
+
+    it "update stock quote with new created_at, which is correct timestamp" do
+      stock_id = apple_stock_quotes[0].id
+      new_created_at = "2018.10.13 10:19"
+      expect {
+        patch "/api/v1/stock_quotes/#{stock_id}", params: {created_at: new_created_at}
+      }.to change(StockQuote, :count).by(0)
+      expect(response).to be_present
+      expect(response).to have_http_status(:success)
+      expect(response_body["id"]).to be_present
+      expect(response_body["created_at"]).to eq("2018-10-13T10:19:00.000Z")
+      expect(response_body["price"]).to be_present
+    end
+  end
 
 end
