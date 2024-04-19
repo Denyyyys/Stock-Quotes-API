@@ -11,7 +11,7 @@ module Api
           stock_quotes = company.stock_quotes.sort_by { |quote| quote.updated_at }.reverse
           render json: stock_quotes
         else
-          render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
         end
       end
 
@@ -36,13 +36,12 @@ module Api
             stock_quotes.destroy_all
             head :no_content
           else
-            render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+            render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
           end
         end
       end
 
       def create
-        # binding.irb
         render_blank_ticker_error && return if params[:ticker].blank?
 
         render_invalid_timestamp_error(params[:created_at]) && return if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
@@ -76,7 +75,7 @@ module Api
             if company
               new_params = new_params.merge({company_id: company.id})
             else
-              render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+              render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
               return
             end
           end

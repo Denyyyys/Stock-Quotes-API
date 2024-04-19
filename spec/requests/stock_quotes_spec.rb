@@ -29,9 +29,10 @@ RSpec.describe "StockQuotes", type: :request do
     end
 
     it "get stock quotes of company, which does not exist" do
-      get "/api/v1/stock_quotes/ticker/not_exist"
+      wrong_ticker = "not_exists"
+      get "/api/v1/stock_quotes/ticker/#{wrong_ticker}"
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({"error"=>"Company with ticker 'not_exist' not found"})
+      expect(response_body).to eq({"error"=>"Company with ticker #{wrong_ticker} not found"})
     end
   end
 
@@ -87,7 +88,7 @@ RSpec.describe "StockQuotes", type: :request do
       }.to change(Company, :count).by(0)
 
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({"error"=> "Company with ticker '#{ticker}' not found"})
+      expect(response_body).to eq({"error"=> "Company with ticker #{ticker} not found"})
     end
   end
 
@@ -225,7 +226,7 @@ RSpec.describe "StockQuotes", type: :request do
       }.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:not_found)
       expect(response).to be_present
-      expect(response_body).to eq({"error" => "Company with ticker '#{ticker}' not found"})
+      expect(response_body).to eq({"error" => "Company with ticker #{ticker} not found"})
     end
 
     it "update stock quote with created_at, which is timestamp error" do

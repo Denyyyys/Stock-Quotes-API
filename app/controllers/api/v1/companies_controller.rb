@@ -6,7 +6,7 @@ module Api
       rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
       rescue_from ActiveRecord::RecordNotUnique, with: :handle_new_record_has_not_unique_ticker
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
-      MAX_PAGINATION_LIMIT=50
+      MAX_PAGINATION_LIMIT = 50
 
       def index
         companies = Company.limit(limit).offset(params[:offset])
@@ -19,7 +19,7 @@ module Api
           if company
             render json: company
           else
-            render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
+            render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
           end
         end
       end
@@ -33,22 +33,21 @@ module Api
       end
 
       def destroy
-        ActiveRecord::Base.transaction do
-          company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
-          if company
-            company.lock!
+        company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+        if company
+          company.with_lock do
             stock_quotes = company.stock_quotes.lock(true)
-            stock_quotes.lock!
             stock_quotes.destroy_all
             company.destroy
             head :no_content
-          else
-            render json: { error: "Company with ticker '#{params[:ticker]}' not found" }, status: :not_found
           end
+        else
+          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
         end
       end
 
       private
+
       def limit
         [
           params.fetch(:limit, MAX_PAGINATION_LIMIT).to_i,

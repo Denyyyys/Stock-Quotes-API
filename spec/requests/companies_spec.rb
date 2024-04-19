@@ -78,8 +78,9 @@ RSpec.describe "Companies", type: :request do
     end
 
     it "provided ticker is not found" do
-      get "/api/v1/companies/not_ticker"
-      expect(response_body).to eq({"error"=>"Company with ticker 'not_ticker' not found"})
+      wrong_ticker="not_ticker"
+      get "/api/v1/companies/#{wrong_ticker}"
+      expect(response_body).to eq({"error"=>"Company with ticker #{wrong_ticker} not found"})
     end
 
   end
@@ -128,12 +129,13 @@ RSpec.describe "Companies", type: :request do
     end
 
     it "delete created record with incorrect ticker" do
+      wrong_ticker="not_exist"
       expect {
-        delete "/api/v1/companies/not_exist"
+        delete "/api/v1/companies/#{wrong_ticker}"
       }.to change(Company, :count).by(0)
       expect(StockQuote.count).to eq(1)
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({"error"=> "Company with ticker 'not_exist' not found"})
+      expect(response_body).to eq({"error"=> "Company with ticker #{wrong_ticker} not found"})
     end
   end
 end

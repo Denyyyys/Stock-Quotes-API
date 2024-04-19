@@ -39,7 +39,7 @@ The data model for this API is depicted in the `data-model.png` file. You can fi
 
 ## Postman Collection
 
-A Postman collection named `collection.json` is provided with this project. You can import this collection into Postman to test the endpoints of the API. 
+A Postman collection named `collection.json` is provided with this project. It's in `Postman` directory. You can import this collection into Postman to test the endpoints of the API. 
 
 ## Swagger Documentation
 
