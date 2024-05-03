@@ -4,7 +4,6 @@ module Api
     class CompaniesController < ApplicationController
       before_action :validate_pagination_params, only: :index
       rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
-      rescue_from ActiveRecord::RecordNotUnique, with: :handle_new_record_has_not_unique_ticker
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
       MAX_PAGINATION_LIMIT = 50
 
@@ -14,13 +13,11 @@ module Api
       end
 
       def show
-        if params[:ticker].present?
-          company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
-          if company
-            render json: company
-          else
-            render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
-          end
+        company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+        if company
+          render json: company
+        else
+          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
         end
       end
       def create
@@ -28,6 +25,7 @@ module Api
         if company.save
           render json: company, status: :created
         else
+
           render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
       end
@@ -61,10 +59,6 @@ module Api
 
       def handle_record_invalid(error)
         render json: { error: error.message }, status: :unprocessable_entity
-      end
-
-      def handle_new_record_has_not_unique_ticker
-        render json: { error: "Company with provided ticker already exists!" }, status: :unprocessable_entity
       end
 
       def handle_lock_wait_timeout
