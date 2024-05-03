@@ -101,13 +101,13 @@ RSpec.describe "Companies", type: :request do
     it "name is not provided" do
       post "/api/v1/companies", params: {ticker: "DELL", origin_country: "USA" }
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body_without_id).to eq({"error"=> "Name can't be blank, Name is too short (minimum is 1 character)"})
+      expect(response_body_without_id).to eq({"error"=> "Name can't be blank"})
     end
 
     it "company with provided ticker already exist" do
       post "/api/v1/companies", params: {name: "Microsoft", ticker: "MSFT", origin_country: "USA"}
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body_without_id).to eq({"error"=> "Company with provided ticker already exists!"})
+      expect(response_body_without_id).to eq({"error"=> "Ticker has already been taken"})
     end
   end
 
