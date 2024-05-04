@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
@@ -10,9 +12,9 @@ Rails.application.routes.draw do
   get 'companies/destroy'
   namespace :api do
     namespace :v1 do
-      resources :companies, only: [:index, :show, :create, :destroy], param: :ticker
+      resources :companies, only: %i[index show create destroy], param: :ticker
 
-      resources :stock_quotes, only: [:destroy, :create, :update, :show] do
+      resources :stock_quotes, only: %i[destroy create update show] do
         get 'ticker/:ticker', action: :get_by_ticker, on: :collection
         delete 'ticker/:ticker', action: :delete_all_by_ticker, on: :collection
       end

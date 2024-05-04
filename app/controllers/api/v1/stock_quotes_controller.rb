@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../../../utilities/utility_methods'
 module Api
   module V1
@@ -5,32 +7,35 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_stock_quote
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
 
-      def get_by_ticker # get all stock quotes of specific company
-        company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+      # get all stock quotes of specific company
+      def get_by_ticker
+        company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
         if company
-          stock_quotes = company.stock_quotes.sort_by { |quote| quote.updated_at }.reverse
+          stock_quotes = company.stock_quotes.sort_by(&:updated_at).reverse
           render json: stock_quotes
         else
           render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
         end
       end
 
-      def destroy # delete one stock quote by id
+      # delete one stock quote by id
+      def destroy
         ActiveRecord::Base.transaction do
-          if integer_string?(params[:id]) && Integer(params[:id]) > 0
+          if integer_string?(params[:id]) && Integer(params[:id]).positive?
             stock_quote_id = integer_string?(params[:id])
             stock_quote = StockQuote.lock.find(stock_quote_id)
             stock_quote.destroy
             head :no_content
           else
-            render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
+            render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
+                   status: :unprocessable_entity
           end
         end
       end
 
       def delete_all_by_ticker
         ActiveRecord::Base.transaction do
-          company = Company.lock.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+          company = Company.lock.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
           if company
             stock_quotes = company.stock_quotes.lock(true)
             stock_quotes.destroy_all
@@ -44,7 +49,9 @@ module Api
       def create
         render_blank_ticker_error && return if params[:ticker].blank?
 
-        render_invalid_timestamp_error(params[:created_at]) && return if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
+        if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
+          render_invalid_timestamp_error(params[:created_at]) && return
+        end
 
         company = Company.lock.find_by(ticker: params[:ticker])
         if company
@@ -56,8 +63,9 @@ module Api
       end
 
       def update
-        unless integer_string?(params[:id]) && Integer(params[:id]) > 0
-          render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
+        unless integer_string?(params[:id]) && Integer(params[:id]).positive?
+          render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
+                 status: :unprocessable_entity
           return
         end
         if params.key?(:created_at) && !valid_timestamp(params[:created_at])
@@ -71,9 +79,9 @@ module Api
         ActiveRecord::Base.transaction do
           stock_quote = StockQuote.lock.find(stock_quote_id)
           if params[:ticker].present?
-            company = Company.lock.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+            company = Company.lock.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
             if company
-              new_params = new_params.merge({company_id: company.id})
+              new_params = new_params.merge({ company_id: company.id })
             else
               render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
               return
@@ -89,22 +97,24 @@ module Api
       end
 
       def show
-        if integer_string?(params[:id]) && Integer(params[:id]) > 0
+        if integer_string?(params[:id]) && Integer(params[:id]).positive?
           id = Integer(params[:id])
           found_stock_quote = StockQuote.find(id)
           render json: found_stock_quote
         else
-          render json: {error: "Id of stock quote should be positive integer! Provided: #{params[:id]}"}, status: :unprocessable_entity
+          render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
+                 status: :unprocessable_entity
         end
       end
 
       private
+
       def handle_cannot_find_stock_quote(e)
         render json: { error: "Cannot find stock quote with id: #{e.id}" }, status: :not_found
       end
 
       def handle_lock_wait_timeout
-        render json: { error: "Failed to acquire lock on the stock quote record" }, status: :unprocessable_entity
+        render json: { error: 'Failed to acquire lock on the stock quote record' }, status: :unprocessable_entity
       end
 
       def stock_quote_params
@@ -128,6 +138,7 @@ module Api
           render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
       end
+
       def render_blank_ticker_error
         render json: { error: "Ticker can't be blank!" }, status: :unprocessable_entity
       end
@@ -146,4 +157,3 @@ module Api
     end
   end
 end
-

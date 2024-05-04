@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../../../utilities/utility_methods'
 module Api
   module V1
@@ -13,13 +15,14 @@ module Api
       end
 
       def show
-        company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+        company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
         if company
           render json: company
         else
           render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
         end
       end
+
       def create
         company = Company.new(company_params)
         if company.save
@@ -31,7 +34,7 @@ module Api
       end
 
       def destroy
-        company = Company.find_by("LOWER(ticker) = LOWER(?)", params[:ticker])
+        company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
         if company
           company.with_lock do
             stock_quotes = company.stock_quotes.lock(true)
@@ -62,7 +65,7 @@ module Api
       end
 
       def handle_lock_wait_timeout
-        render json: { error: "Failed to acquire lock on the company record" }, status: :unprocessable_entity
+        render json: { error: 'Failed to acquire lock on the company record' }, status: :unprocessable_entity
       end
     end
   end

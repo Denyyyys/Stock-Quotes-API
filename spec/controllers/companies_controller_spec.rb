@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require_relative '../../app/controllers/api/v1/companies_controller'
 
@@ -15,12 +17,12 @@ RSpec.describe Api::V1::CompaniesController, type: :controller do
 
     it 'limit provided bigger than MAX_PAGINATION_LIMIT' do
       expect(Company).to receive(:limit).with(max_pagination_limit).and_call_original
-      get :index,params: {limit: larger_limit}
+      get :index, params: { limit: larger_limit }
     end
 
     it 'limit provided is bigger than 0 and smaller than MAX_PAGINATION_LIMIT' do
       expect(Company).to receive(:limit).with(within_limit).and_call_original
-      get :index,params: {limit: within_limit}
+      get :index, params: { limit: within_limit }
     end
   end
 end
