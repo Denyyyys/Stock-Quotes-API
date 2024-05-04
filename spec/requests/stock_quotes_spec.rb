@@ -34,7 +34,7 @@ RSpec.describe 'StockQuotes', type: :request do
       wrong_ticker = 'not_exists'
       get "/api/v1/stock_quotes/ticker/#{wrong_ticker}"
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker} not found" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker} not found!" })
     end
   end
 
@@ -52,8 +52,8 @@ RSpec.describe 'StockQuotes', type: :request do
       expect do
         delete "/api/v1/stock_quotes/#{id}"
       end.to change(StockQuote, :count).by(0)
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body).to eq({ 'error' => "Id of stock quote should be positive integer! Provided: #{id}" })
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({ 'error' => "Cannot find stock quote with id #{id}" })
     end
 
     it 'provided id is not integer error' do
@@ -61,8 +61,8 @@ RSpec.describe 'StockQuotes', type: :request do
       expect do
         delete "/api/v1/stock_quotes/#{id}"
       end.to change(StockQuote, :count).by(0)
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body).to eq({ 'error' => "Id of stock quote should be positive integer! Provided: #{id}" })
+      expect(response).to have_http_status(:not_found)
+      expect(response_body).to eq({ 'error' => "Cannot find stock quote with id #{id}" })
     end
   end
 
@@ -90,7 +90,7 @@ RSpec.describe 'StockQuotes', type: :request do
       end.to change(Company, :count).by(0)
 
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found!" })
     end
   end
 
@@ -136,12 +136,12 @@ RSpec.describe 'StockQuotes', type: :request do
     it 'Add stock quote with incorrect ticker error' do
       ticker = 'not_valid_ticker'
       expect do
-        post '/api/v1/stock_quotes', params: { ticker:, price: 102.92 }
+        post '/api/v1/stock_quotes', params: { 'ticker' => ticker, price: 102.92 }
       end.to change(StockQuote, :count).by(0)
 
       expect(response).to have_http_status(:not_found)
       expect(response_body).to be_present
-      expect(response_body).to eq({ 'error' => "Company with ticker: '#{ticker}' could not be found!" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found!" })
     end
 
     it 'Add stock quote without ticker error' do
@@ -227,7 +227,7 @@ RSpec.describe 'StockQuotes', type: :request do
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:not_found)
       expect(response).to be_present
-      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found!" })
     end
 
     it 'update stock quote with created_at, which is timestamp error' do

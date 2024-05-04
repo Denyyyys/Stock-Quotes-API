@@ -79,7 +79,9 @@ RSpec.describe 'Companies', type: :request do
     it 'provided ticker with wrong case' do
       get '/api/v1/companies/msft'
       # response_body_without_id = response_body.except("id")
-      expect(response_body_without_id).to eq({ 'name' => 'Microsoft', 'ticker' => 'MSFT', 'origin_country' => 'USA' })
+      expect(response_body_without_id).to eq(
+        { 'name' => 'Microsoft', 'ticker' => 'MSFT', 'origin_country' => 'USA' }
+      )
     end
 
     it 'provided ticker is not found' do
@@ -100,7 +102,9 @@ RSpec.describe 'Companies', type: :request do
     it 'ticker is not provided' do
       post '/api/v1/companies', params: { name: 'DELL', origin_country: 'USA' }
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body_without_id).to eq({ 'error' => "Ticker can't be blank, Ticker is too short (minimum is 1 character)" })
+      expect(response_body_without_id).to eq(
+        { 'error' => "Ticker can't be blank, Ticker is too short (minimum is 1 character)" }
+      )
     end
 
     it 'name is not provided' do
