@@ -3,6 +3,7 @@
 require_relative '../../../utilities/utility_methods'
 module Api
   module V1
+    # Controller for handling API endpoints related to companies
     class CompaniesController < ApplicationController
       before_action :validate_pagination_params, only: :index
       rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
@@ -28,22 +29,16 @@ module Api
         if company.save
           render json: company, status: :created
         else
-
           render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
       end
 
       def destroy
-        company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
+        company = find_company_by_ticker(params[:ticker])
         if company
-          company.with_lock do
-            stock_quotes = company.stock_quotes.lock(true)
-            stock_quotes.destroy_all
-            company.destroy
-            head :no_content
-          end
+          destroy_company_and_associated_stock_quotes(company)
         else
-          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
+          render_company_not_found_error
         end
       end
 
@@ -66,6 +61,25 @@ module Api
 
       def handle_lock_wait_timeout
         render json: { error: 'Failed to acquire lock on the company record' }, status: :unprocessable_entity
+      end
+
+      def find_company_by_ticker(ticker)
+        Company.find_by('LOWER(ticker) = LOWER(?)', ticker)
+      end
+
+      def destroy_company_and_associated_stock_quotes(company)
+        ActiveRecord::Base.transaction do
+          company.lock!
+          stock_quotes = company.stock_quotes.lock(true)
+          stock_quotes.lock!
+          stock_quotes.destroy_all
+          company.destroy
+          head :no_content
+        end
+      end
+
+      def render_company_not_found_error
+        render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
       end
     end
   end
