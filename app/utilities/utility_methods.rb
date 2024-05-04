@@ -23,7 +23,7 @@ def validate_pagination_param(param_name)
          status: :unprocessable_entity
 end
 
-def valid_timestamp(timestamp)
+def valid_timestamp?(timestamp)
   Time.parse(timestamp)
   true
 rescue ArgumentError, TypeError
