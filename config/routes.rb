@@ -15,7 +15,7 @@ Rails.application.routes.draw do
       resources :companies, only: %i[index show create destroy], param: :ticker
 
       resources :stock_quotes, only: %i[destroy create update show] do
-        get 'ticker/:ticker', action: :get_by_ticker, on: :collection
+        get 'ticker/:ticker', action: :by_ticker, on: :collection
         delete 'ticker/:ticker', action: :delete_all_by_ticker, on: :collection
       end
     end
