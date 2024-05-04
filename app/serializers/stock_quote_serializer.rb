@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Serializer for the StockQuote model
 class StockQuoteSerializer < ActiveModel::Serializer
   attributes :id, :price, :ticker, :created_at
   def ticker
