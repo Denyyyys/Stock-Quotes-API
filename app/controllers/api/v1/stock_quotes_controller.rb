@@ -3,33 +3,28 @@
 require_relative '../../../utilities/utility_methods'
 module Api
   module V1
+    # Controller for handling API endpoints related to the stock quotes
     class StockQuotesController < ApplicationController
       rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_stock_quote
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
 
       # get all stock quotes of specific company
-      def get_by_ticker
+      def by_ticker
         company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
         if company
           stock_quotes = company.stock_quotes.sort_by(&:updated_at).reverse
           render json: stock_quotes
         else
-          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
+          render_company_not_found_error
         end
       end
 
       # delete one stock quote by id
       def destroy
         ActiveRecord::Base.transaction do
-          if integer_string?(params[:id]) && Integer(params[:id]).positive?
-            stock_quote_id = integer_string?(params[:id])
-            stock_quote = StockQuote.lock.find(stock_quote_id)
-            stock_quote.destroy
-            head :no_content
-          else
-            render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
-                   status: :unprocessable_entity
-          end
+          stock_quote = StockQuote.lock.find(params[:id])
+          stock_quote.destroy
+          head :no_content
         end
       end
 
@@ -41,58 +36,34 @@ module Api
             stock_quotes.destroy_all
             head :no_content
           else
-            render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
+            render_company_not_found_error
           end
         end
       end
 
       def create
-        render_blank_ticker_error && return if params[:ticker].blank?
-
-        if stock_quote_params.key?(:created_at) && !valid_timestamp(stock_quote_params[:created_at])
-          render_invalid_timestamp_error(params[:created_at]) && return
+        return render_blank_ticker_error if params[:ticker].blank?
+        if stock_quote_params.key?(:created_at) && !valid_timestamp?(stock_quote_params[:created_at])
+          return render_invalid_timestamp_error(params[:created_at])
         end
 
         company = Company.lock.find_by(ticker: params[:ticker])
-        if company
-          stock_quote = build_stock_quote(company)
-          save_stock_quote(stock_quote)
-        else
-          render_company_not_found_error
-        end
+        return render_company_not_found_error unless company
+
+        save_stock_quote_and_render(build_stock_quote(company))
       end
 
       def update
-        unless integer_string?(params[:id]) && Integer(params[:id]).positive?
-          render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
-                 status: :unprocessable_entity
-          return
+        if params.key?(:created_at) && !valid_timestamp?(params[:created_at])
+          return render_invalid_timestamp_error(params[:created_at])
         end
-        if params.key?(:created_at) && !valid_timestamp(params[:created_at])
-          render_invalid_timestamp_error(params[:created_at])
-          return
-        end
-
-        new_params = stock_quotes_update_params
-        stock_quote_id = integer_string?(params[:id])
 
         ActiveRecord::Base.transaction do
-          stock_quote = StockQuote.lock.find(stock_quote_id)
-          if params[:ticker].present?
-            company = Company.lock.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
-            if company
-              new_params = new_params.merge({ company_id: company.id })
-            else
-              render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
-              return
-            end
-          end
-          if stock_quote.update(new_params)
-            render json: stock_quote, status: :ok
-            return
-          else
-            render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
-          end
+          stock_quote = StockQuote.lock.find(params[:id])
+          company = find_company(stock_quote)
+          return render_company_not_found_error unless company
+
+          update_and_render_stock_quote(stock_quote, company)
         end
       end
 
@@ -109,8 +80,8 @@ module Api
 
       private
 
-      def handle_cannot_find_stock_quote(e)
-        render json: { error: "Cannot find stock quote with id: #{e.id}" }, status: :not_found
+      def handle_cannot_find_stock_quote(err)
+        render json: { error: "Cannot find stock quote with id #{err.id}" }, status: :not_found
       end
 
       def handle_lock_wait_timeout
@@ -131,9 +102,35 @@ module Api
         StockQuote.new(stock_quote_params.merge(merged_params))
       end
 
-      def save_stock_quote(stock_quote)
+      def save_stock_quote_and_render(stock_quote)
         if stock_quote.save
           render json: stock_quote, status: :created
+        else
+          render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        end
+      end
+
+      def find_company(stock_quote)
+        if params[:ticker].present?
+          find_company_by_ticker(params[:ticker])
+        else
+          find_company_by_id(stock_quote)
+        end
+      end
+
+      def find_company_by_ticker(ticker)
+        Company.lock.find_by('LOWER(ticker) = LOWER(?)', ticker)
+      end
+
+      def find_company_by_id(stock_quote)
+        Company.lock.find(stock_quote.company_id)
+      end
+
+      def update_and_render_stock_quote(stock_quote, company)
+        if stock_quote.update(stock_quotes_update_params)
+          stock_quote.company = company
+          stock_quote.save
+          render json: stock_quote, status: :ok
         else
           render json: { error: stock_quote.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
@@ -148,7 +145,7 @@ module Api
       end
 
       def render_company_not_found_error
-        render json: { error: "Company with ticker: '#{params[:ticker]}' could not be found!" }, status: :not_found
+        render json: { error: "Company with ticker #{params[:ticker]} not found!" }, status: :not_found
       end
 
       def render_blank_stock_quote_id
