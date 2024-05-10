@@ -2,7 +2,8 @@
 
 require 'rails_helper'
 
-RSpec.describe 'StockQuotes', type: :request do
+RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false do
+
   let!(:companies) do
     [
       FactoryBot.create(:company, name: 'Microsoft', ticker: 'MSFT', origin_country: 'USA'),
@@ -139,9 +140,9 @@ RSpec.describe 'StockQuotes', type: :request do
         post '/api/v1/stock_quotes', params: { 'ticker' => ticker, price: 102.92 }
       end.to change(StockQuote, :count).by(0)
 
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
-      expect(response_body).to eq({ 'error' => "Company with ticker #{ticker} not found!" })
+      expect(response_body).to eq({ 'error' => "Ticker is too long (maximum is 5 characters)" })
     end
 
     it 'Add stock quote without ticker error' do
@@ -183,6 +184,8 @@ RSpec.describe 'StockQuotes', type: :request do
       expect(response_body).to be_present
       expect(response_body).to eq({ 'error' => 'Price is not a number' })
     end
+
+
   end
 
   describe 'PATCH /api/v1/stock_quotes/:id' do

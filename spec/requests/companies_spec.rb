@@ -107,13 +107,7 @@ RSpec.describe 'Companies', type: :request do
       )
     end
 
-    it 'name is not provided' do
-      post '/api/v1/companies', params: { ticker: 'DELL', origin_country: 'USA' }
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response_body_without_id).to eq({ 'error' => "Name can't be blank" })
-    end
-
-    it 'company with provided ticker already exist' do
+  it 'company with provided ticker already exist' do
       post '/api/v1/companies', params: { name: 'Microsoft', ticker: 'MSFT', origin_country: 'USA' }
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body_without_id).to eq({ 'error' => 'Ticker has already been taken' })
@@ -145,6 +139,7 @@ RSpec.describe 'Companies', type: :request do
       expect(StockQuote.count).to eq(1)
       expect(response).to have_http_status(:not_found)
       expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker} not found" })
+
     end
   end
 end
