@@ -7,6 +7,7 @@ module Api
     class StockQuotesController < ApplicationController
       rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_stock_quote
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
+      rescue_from ActiveRecord::Deadlocked, with: :handle_deadlock
 
       # get all stock quotes of specific company
       def by_ticker
@@ -47,10 +48,19 @@ module Api
           return render_invalid_timestamp_error(params[:created_at])
         end
 
-        company = Company.lock.find_by(ticker: params[:ticker])
-        return render_company_not_found_error unless company
-
-        save_stock_quote_and_render(build_stock_quote(company))
+        # ticker can be only upper case
+        params[:ticker] = params[:ticker].upcase
+        ActiveRecord::Base.transaction do
+          company = Company.find_or_initialize_by(ticker: params[:ticker])
+          company.with_lock do
+            if company.save
+              # stock_quote = StockQuote.create(company: company, price: 103).lock!
+              save_stock_quote_and_render(build_stock_quote(company))
+            else
+              render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
+            end
+          end
+        end
       end
 
       def update
@@ -88,6 +98,10 @@ module Api
         render json: { error: 'Failed to acquire lock on the stock quote record' }, status: :unprocessable_entity
       end
 
+      def handle_deadlock
+        render json: { error: 'Sorry, there was a database deadlock. Please try again later.' }, status: :internal_server_error
+      end
+
       def stock_quote_params
         params.permit(:price, :created_at)
       end
@@ -99,7 +113,7 @@ module Api
       def build_stock_quote(company)
         merged_params = { company_id: company.id }
         merged_params[:updated_at] = stock_quote_params[:created_at] if stock_quote_params.key?(:created_at)
-        StockQuote.new(stock_quote_params.merge(merged_params))
+        StockQuote.new(stock_quote_params.merge(merged_params))&.lock!
       end
 
       def save_stock_quote_and_render(stock_quote)
