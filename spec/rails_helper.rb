@@ -15,9 +15,25 @@ RSpec.configure do |config|
     Rails.root.join('spec/fixtures')
   ]
 
+  config.use_transactional_fixtures = false
+
   config.use_transactional_fixtures = true
+
+  puts 'config.use_transactional_fixtures'
+  puts config.use_transactional_fixtures
 
   config.infer_spec_type_from_file_location!
 
   config.filter_rails_from_backtrace!
+
+  config.around(:each, :disable_transactions) do |example|
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      config.use_transactional_fixtures = false
+      example.run
+
+      # set configuration back to default
+      config.use_transactional_fixtures = true
+    end
+  end
+
 end

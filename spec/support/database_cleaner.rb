@@ -7,7 +7,12 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do
-    DatabaseCleaner.strategy = :transaction
+    # DatabaseCleaner.strategy = :transaction
+    if example.metadata[:disable_transactions]
+      DatabaseCleaner.strategy = :deletion
+    else
+      DatabaseCleaner.strategy = :transaction
+    end
   end
 
   config.before(:each, js: true) do
