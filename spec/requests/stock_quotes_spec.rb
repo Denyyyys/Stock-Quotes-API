@@ -168,7 +168,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
     it 'Add stock quote with negative price error' do
       price = -123.3
       expect do
-        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: }
+        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: -10}
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
@@ -178,7 +178,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
     it 'Add stock quote with price, which is not number error' do
       price = 'some_string'
       expect do
-        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: }
+        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: 'not_number'}
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
@@ -226,7 +226,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
       stock_id = apple_stock_quotes[0].id
       ticker = 'not_exists_ticker'
       expect do
-        patch "/api/v1/stock_quotes/#{stock_id}", params: { ticker: }
+        patch "/api/v1/stock_quotes/#{stock_id}", params: { ticker: ticker}
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:not_found)
       expect(response).to be_present
