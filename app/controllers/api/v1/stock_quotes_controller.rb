@@ -43,21 +43,16 @@ module Api
       end
 
       def create
-        return render_blank_ticker_error if params[:ticker].blank?
-        if stock_quote_params.key?(:created_at) && !valid_timestamp?(stock_quote_params[:created_at])
-          return render_invalid_timestamp_error(params[:created_at])
-        end
-
+        valid_params_create_stock_quote
+        return if performed?
         upcase_ticker
         ActiveRecord::Base.transaction do
           company = Company.find_or_initialize_by(ticker: params[:ticker])
-          company.with_lock do
-            if company.save
-              # stock_quote = StockQuote.create(company: company, price: 103).lock!
-              save_stock_quote_and_render(build_stock_quote(company))
-            else
-              render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
-            end
+          if company.save
+            company.lock!
+            save_stock_quote_and_render(build_stock_quote(company))
+          else
+            render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
           end
         end
       end
@@ -66,12 +61,10 @@ module Api
         if params.key?(:created_at) && !valid_timestamp?(params[:created_at])
           return render_invalid_timestamp_error(params[:created_at])
         end
-
         ActiveRecord::Base.transaction do
           stock_quote = StockQuote.lock.find(params[:id])
           company = find_company(stock_quote)
           return render_company_not_found_error unless company
-
           update_and_render_stock_quote(stock_quote, company)
         end
       end
@@ -105,6 +98,13 @@ module Api
 
       def stock_quotes_update_params
         params.permit(:price, :created_at)
+      end
+
+      def valid_params_create_stock_quote
+        return render_blank_ticker_error if params[:ticker].blank?
+        if stock_quote_params.key?(:created_at) && !valid_timestamp?(stock_quote_params[:created_at])
+          render_invalid_timestamp_error(params[:created_at])
+        end
       end
 
       def build_stock_quote(company)
