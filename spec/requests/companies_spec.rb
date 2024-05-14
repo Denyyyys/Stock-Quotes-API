@@ -78,7 +78,6 @@ RSpec.describe 'Companies', type: :request do
   describe 'GET /api/v1/companies/:ticker' do
     it 'provided ticker with wrong case' do
       get '/api/v1/companies/msft'
-      # response_body_without_id = response_body.except("id")
       expect(response_body_without_id).to eq(
         { 'name' => 'Microsoft', 'ticker' => 'MSFT', 'origin_country' => 'USA' }
       )
@@ -87,7 +86,7 @@ RSpec.describe 'Companies', type: :request do
     it 'provided ticker is not found' do
       wrong_ticker = 'not_ticker'
       get "/api/v1/companies/#{wrong_ticker}"
-      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker} not found" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker.upcase} not found" })
     end
   end
 
@@ -138,7 +137,7 @@ RSpec.describe 'Companies', type: :request do
       end.to change(Company, :count).by(0)
       expect(StockQuote.count).to eq(1)
       expect(response).to have_http_status(:not_found)
-      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker} not found" })
+      expect(response_body).to eq({ 'error' => "Company with ticker #{wrong_ticker.upcase} not found" })
 
     end
   end

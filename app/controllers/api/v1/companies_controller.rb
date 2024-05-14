@@ -6,6 +6,8 @@ module Api
     # Controller for handling API endpoints related to companies
     class CompaniesController < ApplicationController
       before_action :validate_pagination_params, only: :index
+      before_action :upcase_ticker
+      rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_company
       rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
       MAX_PAGINATION_LIMIT = 50
@@ -16,12 +18,9 @@ module Api
       end
 
       def show
-        company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
-        if company
-          render json: company
-        else
-          render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
-        end
+        company = Company.find_by(ticker: params[:ticker])
+        raise ActiveRecord::RecordNotFound unless company
+        render json: company
       end
 
       def create
@@ -44,6 +43,9 @@ module Api
 
       private
 
+      def upcase_ticker
+        params[:ticker] = params[:ticker]&.upcase
+      end
       def limit
         [
           params.fetch(:limit, MAX_PAGINATION_LIMIT).to_i,
@@ -55,6 +57,9 @@ module Api
         params.permit(:ticker, :name, :origin_country)
       end
 
+      def handle_cannot_find_company
+        render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
+      end
       def handle_record_invalid(error)
         render json: { error: error.message }, status: :unprocessable_entity
       end
