@@ -13,27 +13,35 @@ module Api
       MAX_PAGINATION_LIMIT = 50
 
       def index
-        companies = Company.limit(limit).offset(params[:offset])
-        render json: companies
+        ActiveRecord::Base.transaction do
+          companies = Company.limit(limit).offset(params[:offset])&.lock!
+          render json: companies
+        end
       end
 
       def show
-        company = Company.find_by(ticker: params[:ticker])
-        raise ActiveRecord::RecordNotFound unless company
-        render json: company
+        ActiveRecord::Base.transaction do
+          company = Company.find_by(ticker: params[:ticker])&.lock!
+          raise ActiveRecord::RecordNotFound unless company
+          render json: company
+        end
       end
 
       def create
-        company = Company.create!(company_params)
-        render json: company, status: :created
+        ActiveRecord::Base.transaction do
+          company = Company.create!(company_params)&.lock!
+          render json: company, status: :created
+        end
       end
 
       def destroy
-        company = find_company_by_ticker(params[:ticker])
-        if company
-          destroy_company_and_associated_stock_quotes(company)
-        else
-          render_company_not_found_error
+        ActiveRecord::Base.transaction do
+          company = find_company_by_ticker(params[:ticker])&.lock!
+          if company
+            destroy_company_and_associated_stock_quotes(company)
+          else
+            render_company_not_found_error
+          end
         end
       end
 

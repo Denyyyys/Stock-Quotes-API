@@ -13,6 +13,7 @@ module Api
       def by_ticker
         company = Company.find_by('LOWER(ticker) = LOWER(?)', params[:ticker])
         if company
+          company.lock!
           stock_quotes = company.stock_quotes.sort_by(&:updated_at).reverse
           render json: stock_quotes
         else
