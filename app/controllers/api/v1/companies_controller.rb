@@ -24,12 +24,8 @@ module Api
       end
 
       def create
-        company = Company.new(company_params)
-        if company.save
-          render json: company, status: :created
-        else
-          render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
-        end
+        company = Company.create!(company_params)
+        render json: company, status: :created
       end
 
       def destroy
@@ -61,7 +57,8 @@ module Api
         render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
       end
       def handle_record_invalid(error)
-        render json: { error: error.message }, status: :unprocessable_entity
+        error_message = error.record.errors.full_messages.join(", ")
+        render json: { error: error_message }, status: :unprocessable_entity
       end
 
       def handle_lock_wait_timeout
