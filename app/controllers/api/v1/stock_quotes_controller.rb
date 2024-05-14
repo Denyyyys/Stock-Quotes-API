@@ -48,8 +48,7 @@ module Api
           return render_invalid_timestamp_error(params[:created_at])
         end
 
-        # ticker can be only upper case
-        params[:ticker] = params[:ticker].upcase
+        upcase_ticker
         ActiveRecord::Base.transaction do
           company = Company.find_or_initialize_by(ticker: params[:ticker])
           company.with_lock do
@@ -78,14 +77,8 @@ module Api
       end
 
       def show
-        if integer_string?(params[:id]) && Integer(params[:id]).positive?
-          id = Integer(params[:id])
-          found_stock_quote = StockQuote.find(id)
-          render json: found_stock_quote
-        else
-          render json: { error: "Id of stock quote should be positive integer! Provided: #{params[:id]}" },
-                 status: :unprocessable_entity
-        end
+        found_stock_quote = StockQuote.find(params[:id])
+        render json: found_stock_quote
       end
 
       private
@@ -104,6 +97,10 @@ module Api
 
       def stock_quote_params
         params.permit(:price, :created_at)
+      end
+
+      def upcase_ticker
+        params[:ticker] = params[:ticker]&.upcase
       end
 
       def stock_quotes_update_params
