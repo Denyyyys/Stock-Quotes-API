@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false do
-
   let!(:companies) do
     [
       FactoryBot.create(:company, name: 'Microsoft', ticker: 'MSFT', origin_country: 'USA'),
@@ -142,7 +141,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
-      expect(response_body).to eq({ 'error' => "Ticker is too long (maximum is 5 characters)" })
+      expect(response_body).to eq({ 'error' => 'Ticker is too long (maximum is 5 characters)' })
     end
 
     it 'Add stock quote without ticker error' do
@@ -166,9 +165,8 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
     end
 
     it 'Add stock quote with negative price error' do
-      price = -123.3
       expect do
-        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: -10}
+        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: -10 }
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
@@ -176,16 +174,13 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
     end
 
     it 'Add stock quote with price, which is not number error' do
-      price = 'some_string'
       expect do
-        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: 'not_number'}
+        post '/api/v1/stock_quotes', params: { ticker: 'MSFT', price: 'not_number' }
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
       expect(response_body).to eq({ 'error' => 'Price is not a number' })
     end
-
-
   end
 
   describe 'PATCH /api/v1/stock_quotes/:id' do
@@ -226,7 +221,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
       stock_id = apple_stock_quotes[0].id
       ticker = 'not_exists_ticker'
       expect do
-        patch "/api/v1/stock_quotes/#{stock_id}", params: { ticker: ticker}
+        patch "/api/v1/stock_quotes/#{stock_id}", params: { ticker: }
       end.to change(StockQuote, :count).by(0)
       expect(response).to have_http_status(:not_found)
       expect(response).to be_present

@@ -23,6 +23,7 @@ module Api
         ActiveRecord::Base.transaction do
           company = Company.find_by(ticker: params[:ticker])&.lock!
           raise ActiveRecord::RecordNotFound unless company
+
           render json: company
         end
       end
@@ -50,6 +51,7 @@ module Api
       def upcase_ticker
         params[:ticker] = params[:ticker]&.upcase
       end
+
       def limit
         [
           params.fetch(:limit, MAX_PAGINATION_LIMIT).to_i,
@@ -64,8 +66,9 @@ module Api
       def handle_cannot_find_company
         render json: { error: "Company with ticker #{params[:ticker]} not found" }, status: :not_found
       end
+
       def handle_record_invalid(error)
-        error_message = error.record.errors.full_messages.join(", ")
+        error_message = error.record.errors.full_messages.join(', ')
         render json: { error: error_message }, status: :unprocessable_entity
       end
 

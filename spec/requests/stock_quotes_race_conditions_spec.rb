@@ -1,15 +1,17 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Race Conditions', type: :request, disable_transactions: true do
-  it "test race condition for creating new stock quote with non-existent company" do
+  it 'test race condition for creating new stock quote with non-existent company' do
     expect(ActiveRecord::Base.connection.pool.size).to eq(5)
-    wait_for_it  = true
+    wait_for_it = true
     concurrency_level = 4
 
-    threads = concurrency_level.times.map do |i|
+    threads = concurrency_level.times.map do |_i|
       Thread.new do
         true while wait_for_it
-        post '/api/v1/stock_quotes', params: { ticker: 'GTLB', price: 1}
+        post '/api/v1/stock_quotes', params: { ticker: 'GTLB', price: 1 }
       end
     end
     wait_for_it = false

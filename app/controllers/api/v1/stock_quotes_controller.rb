@@ -46,6 +46,7 @@ module Api
       def create
         valid_params_create_stock_quote
         return if performed?
+
         upcase_ticker
         ActiveRecord::Base.transaction do
           company = Company.find_or_initialize_by(ticker: params[:ticker])
@@ -62,10 +63,12 @@ module Api
         if params.key?(:created_at) && !valid_timestamp?(params[:created_at])
           return render_invalid_timestamp_error(params[:created_at])
         end
+
         ActiveRecord::Base.transaction do
           stock_quote = StockQuote.lock.find(params[:id])
           company = find_company(stock_quote)
           return render_company_not_found_error unless company
+
           update_and_render_stock_quote(stock_quote, company)
         end
       end
@@ -86,7 +89,8 @@ module Api
       end
 
       def handle_deadlock
-        render json: { error: 'Sorry, there was a database deadlock. Please try again later.' }, status: :internal_server_error
+        render json: { error: 'Sorry, there was a database deadlock. Please try again later.' },
+               status: :internal_server_error
       end
 
       def stock_quote_params
@@ -103,9 +107,10 @@ module Api
 
       def valid_params_create_stock_quote
         return render_blank_ticker_error if params[:ticker].blank?
-        if stock_quote_params.key?(:created_at) && !valid_timestamp?(stock_quote_params[:created_at])
-          render_invalid_timestamp_error(params[:created_at])
-        end
+
+        return unless stock_quote_params.key?(:created_at) && !valid_timestamp?(stock_quote_params[:created_at])
+
+        render_invalid_timestamp_error(params[:created_at])
       end
 
       def build_stock_quote(company)
