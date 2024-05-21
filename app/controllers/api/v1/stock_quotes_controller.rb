@@ -46,16 +46,21 @@ module Api
       def create
         valid_params_create_stock_quote
         return if performed?
-
         upcase_ticker
         ActiveRecord::Base.transaction do
-          company = Company.find_or_initialize_by(ticker: params[:ticker])
-          if company.save
-            company.lock!
-            save_stock_quote_and_render(build_stock_quote(company))
-          else
-            render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
+          company = Company.find_by(ticker: params[:ticker])&.lock!
+          if !company
+            ActiveRecord::Base.transaction do
+              ActiveRecord::Base.connection.execute("LOCK TABLE companies IN ACCESS EXCLUSIVE MODE")
+              unless Company.find_by(ticker: params[:ticker])
+                company = Company.new(ticker: params[:ticker])
+                unless company.save
+                  return render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
+                end
+              end
+            end
           end
+          save_stock_quote_and_render(build_stock_quote(company))
         end
       end
 
