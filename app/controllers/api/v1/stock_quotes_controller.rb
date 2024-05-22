@@ -52,7 +52,8 @@ module Api
           if !company
             ActiveRecord::Base.transaction do
               ActiveRecord::Base.connection.execute("LOCK TABLE companies IN ACCESS EXCLUSIVE MODE")
-              unless Company.find_by(ticker: params[:ticker])
+              company = Company.find_by(ticker: params[:ticker])
+              if !company
                 company = Company.new(ticker: params[:ticker])
                 unless company.save
                   return render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
