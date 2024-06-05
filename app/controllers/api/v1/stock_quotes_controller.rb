@@ -57,16 +57,7 @@ module Api
         return if performed?
         upcase_ticker
         ActiveRecord::Base.transaction(isolation: :read_committed) do
-          begin
-            company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
-          rescue ActiveRecord::RecordInvalid => e
-
-            if e.to_s == "Validation failed: Ticker has already been taken"
-              company = @companiesService.find_company_by_ticker(params[:ticker])
-            else
-              raise e
-            end
-          end
+          company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
           save_stock_quote_and_render(build_stock_quote(company))
         end
       end
