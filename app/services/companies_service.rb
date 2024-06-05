@@ -4,14 +4,24 @@ class CompaniesService
   end
 
   def get_or_create_company_by_ticker(ticker)
-    company = find_company_by_ticker(ticker)
-    if !company
-      company = Company.create!(ticker: ticker)
+    begin
+      company = find_company_by_ticker(ticker)
+      if !company
+        company = Company.create!(ticker: ticker)
+      end
+      return company
+    rescue ActiveRecord::RecordInvalid => e
+      if e.to_s == "Validation failed: Ticker has already been taken"
+        return get_or_create_company_by_ticker(ticker)
+      else
+        raise e
+      end
     end
-    company
   end
 
   def create_company(company_params)
-    Company.create!(company_params)
+      Company.create!(company_params)
   end
 end
+
+
