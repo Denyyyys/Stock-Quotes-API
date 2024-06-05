@@ -5,7 +5,6 @@ module Api
   module V1
     # Controller for handling API endpoints related to companies
     class CompaniesController < ApplicationController
-
       def initialize(companiesService = CompaniesService.new)
         @companiesService = companiesService
         super()
@@ -35,10 +34,8 @@ module Api
       end
 
       def create
-        ActiveRecord::Base.transaction(isolation: :read_committed) do
-          company = @companiesService.create_company(company_params)
-          render json: company, status: :created
-        end
+        company = @companiesService.create_company(company_params)
+        render json: company, status: :created
       end
 
       def destroy
