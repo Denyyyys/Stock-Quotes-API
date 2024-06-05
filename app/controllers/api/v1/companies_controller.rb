@@ -5,6 +5,12 @@ module Api
   module V1
     # Controller for handling API endpoints related to companies
     class CompaniesController < ApplicationController
+
+      def initialize(companiesService = CompaniesService.new)
+        @companiesService = companiesService
+        super()
+      end
+
       before_action :validate_pagination_params, only: :index
       before_action :upcase_ticker
       rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_company
@@ -29,8 +35,8 @@ module Api
       end
 
       def create
-        ActiveRecord::Base.transaction do
-          company = Company.create!(company_params)&.lock!
+        ActiveRecord::Base.transaction(isolation: :read_committed) do
+          company = @companiesService.create_company(company_params)
           render json: company, status: :created
         end
       end

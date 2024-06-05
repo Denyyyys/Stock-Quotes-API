@@ -11,7 +11,7 @@ gem 'rails', '~> 7.1.3', '>= 7.1.3.2'
 gem 'pg', '~> 1.1'
 
 # Use the Puma web server [https://github.com/puma/puma]
-gem 'database_cleaner'
+
 gem 'puma', '>= 5.0'
 gem 'rswag'
 gem 'rubocop', '~> 1.63', require: false
@@ -48,6 +48,7 @@ group :development, :test do
   gem 'debug', platforms: %i[mri windows]
   gem 'factory_bot_rails', '~> 6.4'
   gem 'rspec-rails', '~> 6.1.0'
+  gem 'database_cleaner'
 end
 
 group :development do

@@ -141,7 +141,7 @@ RSpec.describe 'StockQuotes', type: :request, use_transactional_fixtures: false 
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response_body).to be_present
-      expect(response_body).to eq({ 'error' => 'Ticker is too long (maximum is 5 characters)' })
+      expect(response_body).to eq({ 'error' => 'Validation failed: Ticker is too long (maximum is 5 characters)'})
     end
 
     it 'Add stock quote without ticker error' do

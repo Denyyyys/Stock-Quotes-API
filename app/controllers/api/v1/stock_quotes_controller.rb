@@ -5,9 +5,18 @@ module Api
   module V1
     # Controller for handling API endpoints related to the stock quotes
     class StockQuotesController < ApplicationController
+      attr_reader :companiesService
+
+      def initialize(companiesService = CompaniesService.new)
+        @companiesService = companiesService
+        super()
+      end
+
+
       rescue_from ActiveRecord::RecordNotFound, with: :handle_cannot_find_stock_quote
       rescue_from ActiveRecord::LockWaitTimeout, with: :handle_lock_wait_timeout
       rescue_from ActiveRecord::Deadlocked, with: :handle_deadlock
+      rescue_from ActiveRecord::RecordInvalid, with: :handle_bad_record
 
       # get all stock quotes of specific company
       def by_ticker
@@ -47,18 +56,15 @@ module Api
         valid_params_create_stock_quote
         return if performed?
         upcase_ticker
-        ActiveRecord::Base.transaction do
-          company = Company.find_by(ticker: params[:ticker])&.lock!
-          if !company
-            ActiveRecord::Base.transaction do
-              ActiveRecord::Base.connection.execute("LOCK TABLE companies IN ACCESS EXCLUSIVE MODE")
-              company = Company.find_by(ticker: params[:ticker])
-              if !company
-                company = Company.new(ticker: params[:ticker])
-                unless company.save
-                  return render json: { error: company.errors.full_messages.join(', ') }, status: :unprocessable_entity
-                end
-              end
+        ActiveRecord::Base.transaction(isolation: :read_committed) do
+          begin
+            company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
+          rescue ActiveRecord::RecordInvalid => e
+
+            if e.to_s == "Validation failed: Ticker has already been taken"
+              company = @companiesService.find_company_by_ticker(params[:ticker])
+            else
+              raise e
             end
           end
           save_stock_quote_and_render(build_stock_quote(company))
@@ -97,6 +103,10 @@ module Api
       def handle_deadlock
         render json: { error: 'Sorry, there was a database deadlock. Please try again later.' },
                status: :internal_server_error
+      end
+
+      def handle_bad_record(e)
+        return render json: { error: e.to_s }, status: :unprocessable_entity
       end
 
       def stock_quote_params
