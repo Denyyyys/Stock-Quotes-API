@@ -7,6 +7,7 @@ class CompaniesService
     begin
       company = find_company_by_ticker(ticker)
       if !company
+        ActiveRecord::Base.connection.execute("LOCK TABLE companies IN SHARE ROW EXCLUSIVE MODE")
         company = Company.create!(ticker: ticker)
       end
       return company
