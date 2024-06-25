@@ -53,12 +53,20 @@ module Api
       end
 
       def create
+        max_attempts = 3
+        attempts = 0
         valid_params_create_stock_quote
         return if performed?
         upcase_ticker
-        ActiveRecord::Base.transaction(isolation: :read_committed) do
-          company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
-          save_stock_quote_and_render(build_stock_quote(company))
+        begin
+          attempts += 1
+          ActiveRecord::Base.transaction(isolation: :read_committed) do
+            company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
+            save_stock_quote_and_render(build_stock_quote(company))
+          end
+        rescue Exception => e
+          retry if attempts < max_attempts
+          render json: {error: e.message}, status: :unprocessable_entity
         end
       end
 

@@ -34,8 +34,11 @@ module Api
       end
 
       def create
-        company = @companiesService.create_company(company_params)
-        render json: company, status: :created
+        ActiveRecord::Base.transaction(isolation: :read_committed) do
+          ActiveRecord::Base.connection.execute("LOCK TABLE companies IN SHARE ROW EXCLUSIVE MODE")
+          company = @companiesService.create_company(company_params)
+          render json: company, status: :created
+        end
       end
 
       def destroy
