@@ -60,7 +60,7 @@ module Api
         upcase_ticker
         begin
           attempts += 1
-          ActiveRecord::Base.transaction(isolation: :read_committed) do
+          ActiveRecord::Base.transaction(isolation: :serializable) do
             company = @companiesService.get_or_create_company_by_ticker(params[:ticker])
             save_stock_quote_and_render(build_stock_quote(company))
           end

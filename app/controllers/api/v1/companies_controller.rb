@@ -34,7 +34,7 @@ module Api
       end
 
       def create
-        ActiveRecord::Base.transaction(isolation: :read_committed) do
+        ActiveRecord::Base.transaction(isolation: :serializable) do
           ActiveRecord::Base.connection.execute("LOCK TABLE companies IN SHARE ROW EXCLUSIVE MODE")
           company = @companiesService.create_company(company_params)
           render json: company, status: :created
